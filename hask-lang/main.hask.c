@@ -1,4 +1,4 @@
-#include "stdioh";
+#include "stdio.h";
 
 signed int factorial (signed int x,) {
 signed int output = 1;
