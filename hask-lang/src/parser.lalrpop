@@ -23,7 +23,7 @@ Type: Node = {
     "none" => Node::Type(Type::None),
 };
 
-Import: Node = "import" " \"" <module:r"[a-zA-Z_][a-zA-Z_0-9]*"> "\"" => Node::Import(module.to_string());
+Import: Node = "import" " \"" <module:r"[a-zA-Z_](\.)[a-zA-Z_0-9]*"> "\"" => Node::Import(module.to_string());
 
 Expr: Node = {Int, Name, Op};
 
