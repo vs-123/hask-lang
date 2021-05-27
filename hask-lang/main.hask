@@ -1,4 +1,4 @@
-import "stdioh"
+import "stdio.h"
 
 function factorial(x: i32) -> i32 [
     var output: i32 = 1;
