@@ -1,0 +1,25 @@
+import "stdio.h"
+
+function factorial(x: i32) -> i32 [
+    var output: i32 = 1;
+    var i: i32 = 0;
+    while i < x [
+        output = output * i;
+        i = i + 1;
+    ];
+    return output;
+]
+
+function main() -> none [
+    var x: i32 = 10;
+    var y: i32 = 10;
+    var z: i32 = x + y;
+
+    if x + y == z [
+        z = z + z;
+    ] else [
+        z = z - z;
+    ];
+
+    factorial[x];
+]

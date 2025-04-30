@@ -1,0 +1,90 @@
+use crate::ast::{Type, Node};
+
+grammar;
+
+Int: Node = r"[0-9]+" => Node::Int(<>.to_string());
+
+Name: Node = r"[a-zA-Z_][a-zA-Z_0-9]*" => Node::Name(<>.to_string());
+
+Literal: Node = {
+    Int,
+    Name
+}
+
+Op: Node = {
+    <l:Literal> <op:r"(\+|-|\*|/|%|\^|&|\||<|>|<=|>=|==|!=)"> <r:Expr> => Node::Op(op.to_string(), Box::new(l), Box::new(r))
+};
+
+Type: Node = {
+    "u32" => Node::Type(Type::Uint32),
+    "u64" => Node::Type(Type::Uint64),
+    "i32" => Node::Type(Type::Int32),
+    "i64" => Node::Type(Type::Int64),
+    "none" => Node::Type(Type::None),
+};
+
+Import: Node = "import" " \"" <module:r"[a-zA-Z_](\.)[a-zA-Z_0-9]*"> "\"" => Node::Import(module.to_string());
+
+Expr: Node = {Int, Name, Op};
+
+Assign: Node = "var" <name:r"[a-zA-Z_][a-zA-Z_0-9]*"> ":" <t:Type> "=" <value:Expr> => Node::Assign(name.to_string(), Box::new(t), Box::new(value));
+
+Re: Node = <name:r"[a-zA-Z_][a-zA-Z_0-9]*"> "=" <value:Expr> => Node::Re(name.to_string(), Box::new(value));
+
+Return: Node = "return" <Expr> => Node::Return(Box::new(<>));
+
+If: Node = {
+    "if" <e:Expr> <body:Block> "else" <other:Block> => Node::If(Box::new(e), Box::new(body), Some(Box::new(other))),
+    "if" <e:Expr> <body:Block> => Node::If(Box::new(e), Box::new(body), None)
+};
+
+While: Node = {
+    "while" <e:Expr> <body:Block> => Node::While(Box::new(e), Box::new(body))
+};
+
+Stmt = {
+    Assign,
+    Re,
+    Return,
+    If,
+    While,
+}
+
+StmtList: Vec<Node> = {
+    <Stmt> ";" => vec![<>],
+    <head:StmtList> <tail:Stmt> ";" => vec![head, vec![tail]].concat()
+};
+
+Block: Node = {
+    "[" "]" => Node::Block(vec![]),
+    "[" <body:StmtList> "]" => Node::Block(body)
+};
+
+ArgList: Vec<(String, Node)> = {
+    "(" ")" => vec![],
+    "(" <ArgList2> ")" => <>
+};
+
+ArgList2: Vec<(String, Node)> = {
+    <name:r"[a-zA-Z_][a-zA-Z_0-9]*"> ":" <t:Type> => vec![(name.to_string(), t)],
+    <head:ArgList2> "," <tail_name:r"[a-zA-Z_][a-zA-Z_0-9]*"> ":" <tail_type:Type> => vec![head, vec![(tail_name.to_string(), tail_type)]].concat()
+};
+
+FuncCallArgList: Vec<String> = {
+    <item:r"[a-zA-Z_][a-zA-Z_0-9]*"> => vec![item.to_string()],
+    <item:FuncCallArgList> "," <item2:FuncCallArgList> => vec![item, item2].concat()
+};
+
+Func: Node = "function" <name:r"[a-zA-Z_][a-zA-Z_0-9]*"> <args:ArgList> "->" <ret:Type> <body:Block> => Node::Func(name.to_string(), args, Box::new(ret), Box::new(body));
+
+FuncCall: Node = <fname:r"[a-zA-Z_][a-zA-Z_0-9]*"> <args:FuncCallArgList> => Node::FuncCall(fname.to_string(), args);
+
+Top: Node = {
+    Import,
+    Func
+}
+
+pub Program: Vec<Node> = {
+    <Top> => vec![<>],
+    <head:Program> <tail:Top> => vec![head, vec![tail]].concat()
+}
